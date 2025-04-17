@@ -8,13 +8,12 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment: production
+    environment: DEPLOYMENT
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Debug secret availability
-        run: echo "${{ secrets.GCP_CREDENTIALS }}" | head -c 10
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
@@ -22,8 +21,7 @@ jobs:
 
       - name: Configure Docker for GCR
         # Esto añade el helper para gcr.io y us-central1-docker.pkg.dev
-        run: |
-          gcloud auth configure-docker
+        run: gcloud auth configure-docker
 
       - name: Build & Push Docker image
         run: |
