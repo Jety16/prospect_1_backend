@@ -19,13 +19,12 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: Configure Docker for GCR
-        # Esto añade el helper para gcr.io y us-central1-docker.pkg.dev
-        run: gcloud auth configure-docker
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - name: Build & Push Docker image
         run: |
-          IMAGE=gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+          IMAGE=us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/backend-images/${{ secrets.CLOUD_RUN_SERVICE }}:${{ github.sha }}
           docker build -t $IMAGE .
           docker push $IMAGE
 
@@ -33,7 +32,7 @@ jobs:
         uses: google-github-actions/deploy-cloudrun@v1
         with:
           service: ${{ secrets.CLOUD_RUN_SERVICE }}
-          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+          image: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/backend-images/${{ secrets.CLOUD_RUN_SERVICE }}:${{ github.sha }}
           region: ${{ secrets.CLOUD_RUN_REGION }}
           env_vars: |
             PORT=8080
