@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment: DEPLOYMENT
+    environment: production
 
     steps:
       - name: Checkout code
@@ -19,33 +19,26 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Configure Docker for GCR
+        # Esto añade el helper para gcr.io y us-central1-docker.pkg.dev
+        run: gcloud auth configure-docker
 
-      - name: Config Docker
+      - name: Build & Push Docker image
         run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev
-
-      - name: Build Docker image
-        run: |
-          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }} .
-
-
-      - name: Push Docker image to GCR
-        run: |
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }}
+          IMAGE=gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+          docker build -t $IMAGE .
+          docker push $IMAGE
 
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v1
         with:
           service: ${{ secrets.CLOUD_RUN_SERVICE }}
-          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }}
+          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }}:${{ github.sha }}
           region: ${{ secrets.CLOUD_RUN_REGION }}
           env_vars: |
+            PORT=8080
             DB_HOST=${{ secrets.DB_HOST }}
             DB_PORT=5432
             DB_NAME=filesdb
             DB_USER=postgres
             DB_PASSWORD=postgres
-            FLASK_APP=app.py
-            FLASK_ENV=development
