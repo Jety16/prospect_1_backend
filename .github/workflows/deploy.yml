@@ -16,6 +16,7 @@ jobs:
   deploy:
     name: 🔄 Build & Deploy to Cloud Run
     runs-on: ubuntu-latest
+    environment: deploy
 
     steps:
       - name: 📥 Checkout code
