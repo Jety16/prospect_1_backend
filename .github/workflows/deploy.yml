@@ -6,6 +6,8 @@ on:
 
 jobs:
   deploy:
+    name: 🚀 Deploy
+    environment: deploy
     runs-on: ubuntu-latest
 
     steps:
