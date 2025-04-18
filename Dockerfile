@@ -7,7 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Este directorio es necesario para el proxy
-RUN mkdir -p /cloudsql
-
-CMD ["python", "app.py"]
+CMD ["python", "app.py"] 
