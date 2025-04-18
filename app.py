@@ -21,13 +21,26 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# Variables de entorno
 db_host = os.getenv('DB_HOST')
 db_port = os.getenv('DB_PORT')
 db_name = os.getenv('DB_NAME')
 db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+# Configuración dinámica de URI según tipo de conexión
+if db_host.startswith("/"):
+    # Conexión por socket Unix (Cloud SQL en Cloud Run)
+    app.config['SQLALCHEMY_DATABASE_URI'] = (
+        f"postgresql+psycopg2://{db_user}:{db_password}@/{db_name}"
+        f"?host={db_host}"
+    )
+else:
+    # Conexión por IP (local o pública)
+    app.config['SQLALCHEMY_DATABASE_URI'] = (
+        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    )
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -133,4 +146,4 @@ def upload_file():
 
 if __name__ == '__main__':
     logger.info("Iniciando servidor Flask...")
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
